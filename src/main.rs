@@ -1,6 +1,4 @@
-#![allow(clippy::cast_lossless)]
-
-use chip8_core::{Chip8, VIDEO_HEIGHT, VIDEO_WIDTH};
+use chip8_core::{Chip8, Display};
 use iced::alignment::Vertical;
 use iced::keyboard;
 use iced::widget::image::{FilterMethod, Handle};
@@ -28,8 +26,8 @@ fn main() -> iced::Result {
         .subscription(App::subscription)
         .window(window::Settings {
             size: Size::new(
-                VIDEO_WIDTH as f32 * VIDEO_SCALE,
-                VIDEO_HEIGHT as f32 * VIDEO_SCALE + 30.0,
+                Display::WIDTH_F32 * VIDEO_SCALE,
+                Display::HEIGHT_F32 * VIDEO_SCALE + 30.0,
             ),
             min_size: Some(Size::new(180.0, 180.0)),
             ..Default::default()
@@ -174,8 +172,8 @@ impl App {
 
         let pixels = convert_to_rgba(self.emulator.framebuffer());
         let screen = image(Handle::from_rgba(
-            VIDEO_WIDTH as u32,
-            VIDEO_HEIGHT as u32,
+            Display::WIDTH_U32,
+            Display::HEIGHT_U32,
             pixels,
         ))
         .width(Length::Fill)

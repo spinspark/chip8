@@ -1,4 +1,4 @@
-use crate::{Chip8, ExecuteError, KEY_COUNT, STACK_SIZE, VIDEO_HEIGHT, VIDEO_WIDTH};
+use crate::{Chip8, Display, ExecuteError, KeyCount, STACK_SIZE};
 use rand::RngExt;
 
 impl Chip8 {
@@ -231,27 +231,27 @@ impl Chip8 {
         let vy = ((opcode & 0x00F0) >> 4) as usize;
         let height = (opcode & 0x000F) as u8;
 
-        let x_pos = self.registers[vx] % VIDEO_WIDTH as u8;
-        let y_pos = self.registers[vy] % VIDEO_HEIGHT as u8;
+        let x_pos = self.registers[vx] % Display::WIDTH_U8;
+        let y_pos = self.registers[vy] % Display::HEIGHT_U8;
 
         let mut flipped = false;
 
         for row in 0..height {
             let sprite_byte = self.memory[(self.index + row as u16) as usize];
 
-            if self.quirks.clipping && (y_pos + row) as usize >= VIDEO_HEIGHT {
+            if self.quirks.clipping && (y_pos + row) >= Display::HEIGHT_U8 {
                 break;
             }
 
             for col in 0..8 {
-                if self.quirks.clipping && (x_pos + col) as usize >= VIDEO_WIDTH {
+                if self.quirks.clipping && (x_pos + col) >= Display::WIDTH_U8 {
                     break;
                 }
 
                 if (sprite_byte & (0x80 >> col)) != 0 {
-                    let wrapped_x_pos = (x_pos + col) as usize % VIDEO_WIDTH;
-                    let wrapped_y_pos = (y_pos + row) as usize % VIDEO_HEIGHT;
-                    let idx = wrapped_x_pos + VIDEO_WIDTH * wrapped_y_pos;
+                    let x_pos = ((x_pos + col) % Display::WIDTH_U8) as usize;
+                    let y_pos = ((y_pos + row) % Display::HEIGHT_U8) as usize;
+                    let idx = x_pos + Display::WIDTH_USIZE * y_pos;
 
                     flipped |= self.framebuffer[idx];
                     self.framebuffer[idx] ^= true;
@@ -297,13 +297,13 @@ impl Chip8 {
         let mut done = false;
 
         if !self.quirks.release || self.pressed_key.is_none() {
-            for i in 0..KEY_COUNT {
-                if self.keys[i] {
-                    self.registers[vx] = i as u8;
+            for i in 0..KeyCount::U8 {
+                if self.keys[i as usize] {
+                    self.registers[vx] = i;
                     if !self.quirks.release {
                         done = true;
                     }
-                    self.pressed_key = Some(i);
+                    self.pressed_key = Some(i as usize);
                     break;
                 }
             }
@@ -367,27 +367,27 @@ impl Chip8 {
 
     // Fx55: LD [I], Vx
     pub(crate) fn op_fx55(&mut self, opcode: u16) {
-        let vx = ((opcode & 0x0F00) >> 8) as usize;
+        let vx = (opcode & 0x0F00) >> 8;
 
         for i in 0..=vx {
-            self.memory[(self.index + i as u16) as usize] = self.registers[i];
+            self.memory[(self.index + i) as usize] = self.registers[i as usize];
         }
 
         if self.quirks.memory {
-            self.index = self.index + vx as u16 + 1;
+            self.index = self.index + vx + 1;
         }
     }
 
     // Fx65: LD Vx, [I]
     pub(crate) fn op_fx65(&mut self, opcode: u16) {
-        let vx = ((opcode & 0x0F00) >> 8) as usize;
+        let vx = (opcode & 0x0F00) >> 8;
 
         for i in 0..=vx {
-            self.registers[i] = self.memory[(self.index + i as u16) as usize];
+            self.registers[i as usize] = self.memory[(self.index + i) as usize];
         }
 
         if self.quirks.memory {
-            self.index = self.index + vx as u16 + 1;
+            self.index = self.index + vx + 1;
         }
     }
 }

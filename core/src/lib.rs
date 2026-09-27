@@ -2,15 +2,41 @@
 
 mod instructions;
 
-pub const VIDEO_WIDTH: usize = 64;
-pub const VIDEO_HEIGHT: usize = 32;
-
-const START_ADDR: usize = 0x200;
 const MEMORY_SIZE: usize = 4096;
 const REGISTER_COUNT: usize = 16;
 const STACK_SIZE: usize = 16;
-const KEY_COUNT: usize = 16;
 const FONT_SET_SIZE: usize = 80;
+
+pub struct Display;
+
+impl Display {
+    const RAW_WIDTH: u8 = 64;
+    const RAW_HEIGHT: u8 = 32;
+
+    pub const WIDTH_U8: u8 = Self::RAW_WIDTH;
+    pub const WIDTH_USIZE: usize = Self::RAW_WIDTH as usize;
+    pub const WIDTH_U32: u32 = Self::RAW_WIDTH as u32;
+    pub const WIDTH_F32: f32 = Self::RAW_WIDTH as f32;
+
+    pub const HEIGHT_U8: u8 = Self::RAW_HEIGHT;
+    pub const HEIGHT_USIZE: usize = Self::RAW_HEIGHT as usize;
+    pub const HEIGHT_U32: u32 = Self::RAW_HEIGHT as u32;
+    pub const HEIGHT_F32: f32 = Self::RAW_HEIGHT as f32;
+}
+
+struct StartAddr;
+
+impl StartAddr {
+    pub const U16: u16 = 0x200;
+    pub const USIZE: usize = Self::U16 as usize;
+}
+
+struct KeyCount;
+
+impl KeyCount {
+    pub const U8: u8 = 16;
+    pub const USIZE: usize = Self::U8 as usize;
+}
 
 const FONT_SET: [u8; FONT_SET_SIZE] = [
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -41,8 +67,8 @@ pub struct Chip8 {
     stack: [u16; STACK_SIZE],
     delay_timer: u8,
     sound_timer: u8,
-    keys: [bool; KEY_COUNT],
-    framebuffer: [bool; VIDEO_WIDTH * VIDEO_HEIGHT],
+    keys: [bool; KeyCount::USIZE],
+    framebuffer: [bool; Display::WIDTH_USIZE * Display::HEIGHT_USIZE],
     quirks: Quirks,
     // Used to check if pressed key is released
     pressed_key: Option<usize>,
@@ -59,13 +85,13 @@ impl Chip8 {
             memory,
             registers: [0; REGISTER_COUNT],
             index: 0,
-            pc: START_ADDR as u16,
+            pc: StartAddr::U16,
             sp: 0,
             stack: [0; STACK_SIZE],
             delay_timer: 0,
             sound_timer: 0,
-            keys: [false; KEY_COUNT],
-            framebuffer: [false; VIDEO_WIDTH * VIDEO_HEIGHT],
+            keys: [false; KeyCount::USIZE],
+            framebuffer: [false; Display::WIDTH_USIZE * Display::HEIGHT_USIZE],
             quirks: Quirks::new(),
             pressed_key: None,
         }
@@ -75,19 +101,19 @@ impl Chip8 {
         self.memory = [0; MEMORY_SIZE];
         self.registers = [0; REGISTER_COUNT];
         self.index = 0;
-        self.pc = START_ADDR as u16;
+        self.pc = StartAddr::U16;
         self.sp = 0;
         self.stack = [0; STACK_SIZE];
         self.delay_timer = 0;
         self.sound_timer = 0;
-        self.keys = [false; KEY_COUNT];
-        self.framebuffer = [false; VIDEO_WIDTH * VIDEO_HEIGHT];
+        self.keys = [false; KeyCount::USIZE];
+        self.framebuffer = [false; Display::WIDTH_USIZE * Display::HEIGHT_USIZE];
 
         self.memory[..FONT_SET_SIZE].copy_from_slice(&FONT_SET[..]);
     }
 
     pub fn load(&mut self, data: &[u8]) {
-        self.memory[START_ADDR..(START_ADDR + data.len())].copy_from_slice(data);
+        self.memory[StartAddr::USIZE..(StartAddr::USIZE + data.len())].copy_from_slice(data);
     }
 
     #[must_use]
