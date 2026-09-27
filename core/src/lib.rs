@@ -1,4 +1,6 @@
 #![allow(clippy::cast_lossless)]
+#![allow(clippy::map_unwrap_or)]
+#![allow(clippy::option_if_let_else)]
 
 mod instructions;
 
@@ -112,13 +114,28 @@ impl Chip8 {
         self.memory[..FONT_SET_SIZE].copy_from_slice(&FONT_SET[..]);
     }
 
-    pub fn load(&mut self, data: &[u8]) {
+    pub fn load_program(&mut self, data: &[u8]) {
         self.memory[StartAddr::USIZE..(StartAddr::USIZE + data.len())].copy_from_slice(data);
+    }
+
+    pub fn reload_with_quirks(&mut self, quirks: Quirks, data: &[u8]) {
+        self.quirks = quirks;
+        self.reset();
+        self.load_program(data);
     }
 
     #[must_use]
     pub const fn framebuffer(&self) -> &[bool] {
         &self.framebuffer
+    }
+
+    #[must_use]
+    pub const fn quirks(&self) -> Quirks {
+        self.quirks
+    }
+
+    pub const fn set_quirks(&mut self, quirks: Quirks) {
+        self.quirks = quirks;
     }
 
     pub const fn set_key(&mut self, idx: usize, pressed: bool) {
@@ -216,24 +233,24 @@ impl Default for Chip8 {
 }
 
 #[allow(clippy::struct_excessive_bools)]
-#[derive(Debug)]
-struct Quirks {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Quirks {
     /// The AND, OR and XOR opcodes (`8xy1`, `8xy2` and `8xy3`) reset the flags register to zero.
-    vf_reset: bool,
+    pub vf_reset: bool,
     /// The save and load opcodes (`Fx55` and `Fx65`) increment the index register.
-    memory: bool,
+    pub memory: bool,
     /// Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around the screen.
-    clip: bool,
+    pub clip: bool,
     /// The shift opcodes (`8xy6` and `8xyE`) only operate on vX instead of storing the shifted version of vY in vX.
-    shift: bool,
+    pub shift: bool,
     /// The jump instruction (`Bnnn`) doesn't use v0, but vX instead where X is the highest nibble of nnn.
-    jump: bool,
+    pub jump: bool,
     /// The get key instruction (`Fx0A`) waits for a key press and key up.
-    release: bool,
+    pub release: bool,
 }
 
-impl Quirks {
-    pub const fn new() -> Self {
+impl Default for Quirks {
+    fn default() -> Self {
         Self {
             vf_reset: true,
             memory: true,
@@ -242,6 +259,13 @@ impl Quirks {
             jump: false,
             release: true,
         }
+    }
+}
+
+impl Quirks {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
