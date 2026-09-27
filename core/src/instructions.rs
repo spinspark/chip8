@@ -152,7 +152,7 @@ impl Chip8 {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         let vy = ((opcode & 0x00F0) >> 4) as usize;
 
-        if !self.quirks.shifting {
+        if !self.quirks.shift {
             self.registers[vx] = self.registers[vy];
         }
 
@@ -178,7 +178,7 @@ impl Chip8 {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         let vy = ((opcode & 0x00F0) >> 4) as usize;
 
-        if !self.quirks.shifting {
+        if !self.quirks.shift {
             self.registers[vx] = self.registers[vy];
         }
 
@@ -207,7 +207,7 @@ impl Chip8 {
     // Bnnn: JP V0, addr
     pub(crate) const fn op_bnnn(&mut self, opcode: u16) {
         let addr = opcode & 0x0FFF;
-        if self.quirks.jumping {
+        if self.quirks.jump {
             let vx = ((opcode & 0x0F00) >> 8) as usize;
             self.pc = addr + self.registers[vx] as u16;
         } else {
@@ -239,12 +239,12 @@ impl Chip8 {
         for row in 0..height {
             let sprite_byte = self.memory[(self.index + row as u16) as usize];
 
-            if self.quirks.clipping && (y_pos + row) >= Display::HEIGHT_U8 {
+            if self.quirks.clip && (y_pos + row) >= Display::HEIGHT_U8 {
                 break;
             }
 
             for col in 0..8 {
-                if self.quirks.clipping && (x_pos + col) >= Display::WIDTH_U8 {
+                if self.quirks.clip && (x_pos + col) >= Display::WIDTH_U8 {
                     break;
                 }
 

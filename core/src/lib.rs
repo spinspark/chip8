@@ -215,6 +215,7 @@ impl Default for Chip8 {
     }
 }
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug)]
 struct Quirks {
     /// The AND, OR and XOR opcodes (`8xy1`, `8xy2` and `8xy3`) reset the flags register to zero.
@@ -222,11 +223,11 @@ struct Quirks {
     /// The save and load opcodes (`Fx55` and `Fx65`) increment the index register.
     memory: bool,
     /// Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around the screen.
-    clipping: bool,
+    clip: bool,
     /// The shift opcodes (`8xy6` and `8xyE`) only operate on vX instead of storing the shifted version of vY in vX.
-    shifting: bool,
+    shift: bool,
     /// The jump instruction (`Bnnn`) doesn't use v0, but vX instead where X is the highest nibble of nnn.
-    jumping: bool,
+    jump: bool,
     /// The get key instruction (`Fx0A`) waits for a key press and key up.
     release: bool,
 }
@@ -236,9 +237,9 @@ impl Quirks {
         Self {
             vf_reset: true,
             memory: true,
-            clipping: true,
-            shifting: false,
-            jumping: false,
+            clip: true,
+            shift: false,
+            jump: false,
             release: true,
         }
     }
