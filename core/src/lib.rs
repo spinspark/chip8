@@ -125,6 +125,15 @@ impl Chip8 {
         self.keys[idx] = pressed;
     }
 
+    /// Runs a single cycle of the emulator by fetching, decoding, and executing an instruction.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an [`ExecuteError`] if:
+    ///
+    /// * **`UndefinedInstruction`** - The fetched 16-bit opcode does not match any valid CHIP-8 instruction.
+    /// * **`StackOverflow`** - A subroutine call (`0x2NNN`) is executed, but the call stack is already at maximum capacity.
+    /// * **`StackUnderflow`** - A return instruction (`0x00EE`) is executed, but the call stack is already empty.
     pub fn emulate(&mut self) -> Result<(), ExecuteError> {
         // Fetch
         let opcode = self.fetch();
